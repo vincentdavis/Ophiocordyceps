@@ -47,27 +47,27 @@ def disable_event():
 
 
 try:
-    devs = find(find_all=True, idVendor=0x0fcf)
-    for dev in devs:
-        if dev.idProduct in [0x1008, 0x1009]:
-            stick = driver.USB2Driver(log=LOG, debug=DEBUG, idProduct=dev.idProduct, bus=dev.bus, address=dev.address)
-            try:
-                stick.open()
-            except:
-                continue
-            stick.close()
-            break
-    else:
-        print("No ANT devices available")
-        if getattr(sys, 'frozen', False):
-            input()
-        sys.exit()
+    # devs = find(find_all=True, idVendor=0x0fcf)
+    # for dev in devs:
+    #     if dev.idProduct in [0x1008, 0x1009]:
+    #         stick = driver.USB2Driver(log=LOG, debug=DEBUG, idProduct=dev.idProduct, bus=dev.bus, address=dev.address)
+    #         try:
+    #             stick.open()
+    #         except:
+    #             continue
+    #         stick.close()
+    #         break
+    # else:
+    #     print("No ANT devices available")
+    #     if getattr(sys, 'frozen', False):
+    #         input()
+    #     sys.exit()
 
-    antnode = node.Node(stick)
-    print("Starting ANT node")
-    antnode.start()
-    key = node.Network(NETKEY, 'N:ANT+')
-    antnode.setNetworkKey(0, key)
+    # antnode = node.Node(stick)
+    # print("Starting ANT node")
+    # antnode.start()
+    # key = node.Network(NETKEY, 'N:ANT+')
+    # antnode.setNetworkKey(0, key)
 
     print("Starting power meter with ANT+ ID " + repr(POWER_SENSOR_ID))
     try:
@@ -101,6 +101,7 @@ try:
             if t >= last + 1:
                 if not power:
                     power = w.get()
+                    print("power ->",power)
                     # TODO have a gui option for this random int range. Call it "Power Variability"
                     r = random.randint(-5, 5)
                     # TODO Would like to have optons for the .75 and 1.25 "Within power range"
@@ -113,10 +114,11 @@ try:
                 # TODO have a gui option for this random int range call it "Power range limits"
                 power = w.get() + random.randint(0, 15)
                 if power:
-                    power_meter.update(power, cadence)
+                    # power_meter.update(power, cadence)
+                    print(power, cadence)
                     stopped = False
                 elif not stopped:
-                    power_meter.update(power)
+                    # power_meter.update(power)
                     stopped = True
                 last = t
             master.update_idletasks()

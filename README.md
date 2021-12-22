@@ -2,6 +2,11 @@
 
 
 
+## Clone app
+* `git clone https://github.com/karthicksakkaravarti/vpower.git`
+* `cd vpower`
+
+
 ## Building GUI 
 * Clone or download this repo
 * `npm install`

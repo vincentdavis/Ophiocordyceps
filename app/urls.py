@@ -6,6 +6,7 @@ from config import DEBUG, LOG, NETKEY, POWER_SENSOR_ID
 
 urlpatterns = [
     path('', views.LandingView.as_view(), name="home_page"),  # Login Root url
-    path('request', views.Request.as_view(), name="Request"),  # Login Root url
+    path('request', views.Request.as_view(), name="Request"),
+    path('fileLoad', views.FileLoad.as_view(), name="File Load"),
 
 ]

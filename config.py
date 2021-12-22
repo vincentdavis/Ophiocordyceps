@@ -1,15 +1,8 @@
 from configparser import ConfigParser
 
 import os, sys
-from ant.core import log
-from BtAtsPowerCalculator import BtAtsPowerCalculator
-from CycleOpsFluid2PowerCalculator import CycleOpsFluid2PowerCalculator
-from EliteNovoForceS3PowerCalculator import EliteNovoForceS3PowerCalculator
-from GenericFluidPowerCalculator import GenericFluidPowerCalculator
-from GenericMagneticPowerCalculator import GenericMagneticPowerCalculator
-from KurtKineticPowerCalculator import KurtKineticPowerCalculator
+
 from LinearInterpolationPowerCalculator import LinearInterpolationPowerCalculator
-from TacxBlueMotionPowerCalculator import TacxBlueMotionPowerCalculator
 from constants import *
 import hashlib
 

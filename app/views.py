@@ -2,7 +2,7 @@ import platform
 import random
 import sys
 import time
-
+import pandas as pd
 from django.shortcuts import render
 
 # Create your views here.
@@ -53,43 +53,78 @@ def disable_event():
 
 
 
+
+
 class LandingView(TemplateView):
     template_name = "index.html"
+
+
+class FileLoad(APIView):
+    def post(self, request, format=None):
+        try:
+            print(type(request.FILES['file']))
+            df = pd.read_csv(request.FILES['file'])
+            power = df.to_dict().get('power', None)
+            cadence = df.to_dict().get('cadence', None)
+            response = []
+            if power and cadence:
+                # forming list
+                if len(power) == len(cadence):
+                    for i, j in power.items():
+                        response.append([power.get(i), cadence.get(i)])
+            print(df.to_json())
+            return Response(response)
+        except Exception as e:
+            print(str(e))
+            return Response(False)
+
+
 
 
 class Request(APIView):
     def get(self, request, format=None):
         try:
-            print("PW", request.GET.get('PW'))
-            print("PW", request.GET.get('PV'))
-            print("WPR1", request.GET.get('WPR1'))
-            print("WPR2", request.GET.get('WPR2'))
-            print("COR",request.GET.get('COR'))
-            print("PRL", request.GET.get('PRL'))
+            PW = int(request.GET.get('PW'))
+            PW_O = request.GET.get('PW_O', None)
+            PV = int(request.GET.get('PV', None))
+            WPR1 = float(request.GET.get('WPR1', None))
+            WPR2 = float(request.GET.get('WPR2', None))
+            COR = int(request.GET.get('COR', None))
+            COR_O = request.GET.get('COR_O', None)
+            PRL = int(request.GET.get('PRL', None))
+
+            print("PW", PW)
+            print("PV", PV)
+            print("WPR1", WPR1)
+            print("WPR2", WPR2)
+            print("COR",COR)
+            print("PRL", PRL)
             response = None
-            devs = find(find_all=True, idVendor=0x0fcf)
-            for dev in devs:
-                if dev.idProduct in [0x1008, 0x1009]:
-                    stick = driver.USB2Driver(log=LOG, debug=DEBUG, idProduct=dev.idProduct, bus=dev.bus,
-                                              address=dev.address)
-                    try:
-                        stick.open()
-                    except:
-                        continue
-                    stick.close()
-                    break
-            else:
-                print("No ANT devices available")
-                if getattr(sys, 'frozen', False):
-                    input()
-                sys.exit()
-
-            antnode = node.Node(stick)
-            print("Starting ANT node")
-            antnode.start()
-            key = node.Network(NETKEY, 'N:ANT+')
-            antnode.setNetworkKey(0, key)
-
+            antnode = None
+            try:
+                devs = find(find_all=True, idVendor=0x0fcf)
+                for dev in devs:
+                    if dev.idProduct in [0x1008, 0x1009]:
+                        stick = driver.USB2Driver(log=LOG, debug=DEBUG, idProduct=dev.idProduct, bus=dev.bus,
+                                                  address=dev.address)
+                        try:
+                            stick.open()
+                        except:
+                            continue
+                        stick.close()
+                        break
+                else:
+                    print("No ANT devices available")
+                    if getattr(sys, 'frozen', False):
+                        input()
+                    sys.exit()
+                antnode = node.Node(stick)
+                print("Starting ANT node")
+                antnode.start()
+                key = node.Network(NETKEY, 'N:ANT+')
+                antnode.setNetworkKey(0, key)
+            except Exception as e:
+                pass
             print("Starting power meter with ANT+ ID " + repr(POWER_SENSOR_ID))
             try:
                 # Create the power meter object and open it
@@ -99,37 +134,50 @@ class Request(APIView):
                 print("power_meter error: " + repr(e))
                 power_meter = None
 
-            # TODO Replace this with new gui.
-            # TODO Add Gui options as requested below
             last = 0
             stopped = True
             power = None
+            cadence = 0
             r = 1
 
             print("Main wait loop")
             try:
                 t = int(time.time())
+                r = 1
                 if t >= last + 1:
                     if not power:
-                        power = request.GET.get('PW')
-                        # TODO have a gui option for this random int range. Call it "Power Variability"
-                        r = request.GET.get('PV')
-                        # TODO Would like to have optons for the .75 and 1.25 "Within power range"
-                    if (power * request.GET.get('WPR1')) < power + r < (power * request.GET.get('WPR2')):
+                        power = PW
+                        if PV:
+                            r = PV
+                        else:
+                            r = random.randint(-5, 5)
+                    if (power * WPR1) < power + r < (power * WPR1):
                         power = power + r
                     else:
                         power = power - r
-                    # TODO have a gui option for this random int range call it "Cadence offset range"
-                    cadence = request.GET.get('COR')
-                    # TODO have a gui option for this random int range call it "Power range limits"
-                    power = request.GET.get('power') + request.GET.get('PRL')
+                    if COR:
+                        cadence = COR
+                    else:
+                        cadence = 85 + random.randint(-5, 5)
+                    if PRL:
+                        power = PW + PRL
+                    else:
+                        power = PW + random.randint(0, 15)
                     if power:
-                        power_meter.update(power, cadence)
+                        try:power_meter.update(PW_O if PW_O  else power, COR_O if COR_O else cadence)
+                        except: pass
+                        print(power, cadence)
                         stopped = False
                     elif not stopped:
-                        power_meter.update(power)
+                        try:power_meter.update(PW_O if PW_O  else power)
+                        except : pass
+
                         stopped = True
                     last = t
+                return Response({
+                    "power": power,
+                    "cadence": cadence,
+                })
                 # master.update_idletasks()
                 # master.update()
             except (KeyboardInterrupt, SystemExit):
