@@ -8,10 +8,15 @@
 
 
 ## Building GUI 
+
+Windows
 * Clone or download this repo
 * `npm install`
 * `npm run electron:build` cmd will generate electron_dist folder
 
+Mac
+
+* https://www.electronjs.org/docs/latest/development/build-instructions-macos
 
 ## Running Server 
 
