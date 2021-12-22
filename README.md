@@ -7,6 +7,11 @@
 * `cd vpower`
 
 
+## Building web
+
+* `npm run build`
+
+
 ## Building GUI 
 
 Windows
