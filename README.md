@@ -29,6 +29,12 @@ Mac
 * `python manage.py migrate`
 * `python manage.py runserver 9010`
 
+## Accessing Web
+
+* Open http://localhost:9010
+
+
 ## Accessing GUI
 
 * Open GUI app under  `/dist_electron/win-unpacked/vPower.exe` by double clicking
+
