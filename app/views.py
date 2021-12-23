@@ -163,13 +163,16 @@ class Request(APIView):
                         power = PW + PRL
                     else:
                         power = PW + random.randint(0, 15)
+                    power = PW_O if PW_O and PW_O != 'null' else power
+                    cadence = COR_O if COR_O and  COR_O!='null'  else cadence
+
                     if power:
-                        try:power_meter.update(PW_O if PW_O  else power, COR_O if COR_O else cadence)
+                        try:power_meter.update(power, cadence)
                         except: pass
                         print(power, cadence)
                         stopped = False
                     elif not stopped:
-                        try:power_meter.update(PW_O if PW_O  else power)
+                        try:power_meter.update(power, cadence)
                         except : pass
 
                         stopped = True

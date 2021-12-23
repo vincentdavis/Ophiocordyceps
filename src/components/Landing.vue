@@ -1,6 +1,18 @@
 <template>
   <v-container>
     <v-card elevation="0">
+      <v-overlay absolute :value="overlay">
+        <v-btn
+          x-large
+          @click="
+            startOver = true;
+            load();
+          "
+          color="primary"
+        >
+          <v-icon>mdi-play</v-icon> Start</v-btn
+        >
+      </v-overlay>
       <v-card-text>
         <v-tabs v-model="tab">
           <v-tab>Default</v-tab>
@@ -9,6 +21,21 @@
 
         <v-tabs-items v-model="tab">
           <v-tab-item>
+            <v-row
+              ><v-col class="d-flex justify-end">
+                <v-btn
+                  v-if="!overlay"
+                  outlined
+                  @click="
+                    stop();
+                    overlay = true;
+                  "
+                  color="red"
+                >
+                  <v-icon>mdi-pause</v-icon> Stop</v-btn
+                >
+              </v-col></v-row
+            >
             <v-row class="mt-2">
               <v-col cols="12" sm="6">
                 <v-card color="primary">
@@ -16,7 +43,7 @@
                   <v-card-text>
                     <v-row>
                       <v-col cols="12" sm="6">
-                        <v-icon color="white" x-large>mdi-hydro-power</v-icon>
+                        <v-icon color="white" x-large>mdi-power-plug </v-icon>
                       </v-col>
                       <v-col cols="12" sm="6">
                         <b
@@ -100,24 +127,96 @@
             </v-row>
           </v-tab-item>
           <v-tab-item>
-            <v-file-input
-              v-model="file"
-              @change="callAPI"
-              hint="Add power and cadence column in excel"
-              persistent-hint
-              label="Upload file"
-              chips
-              truncate-length="15"
-            ></v-file-input>
+            <v-alert class="mt-1" dense type="info">
+              RUN FILE will send power values every
+              <strong>1 second </strong> in loop-like
+            </v-alert>
+            <v-row>
+              <v-col cols="12" sm="10">
+                <v-file-input
+                  v-model="file"
+                  hint="Accept File format (.csv)"
+                  persistent-hint
+                  label="Upload file"
+                  chips
+                  truncate-length="15"
+                ></v-file-input>
+              </v-col>
+              <v-col cols="12" sm="2">
+                <v-btn
+                  :disabled="!file"
+                  class="mt-3"
+                  @click="callAPI"
+                  outlined
+                  color="primary"
+                  >Run File</v-btn
+                >
+              </v-col>
+            </v-row>
             <v-data-table
-            v-if="DataItems.length >=1"
-            :items="DataItems"
-            :headers="[
-            {'text': 'Power', 'value': 'power'},
-            {'text': 'Cadence', 'value': 'cadence'}
-            ]"
+              dense
+              v-if="DataItems.length >= 1 && file"
+              :items="DataItems"
+              :headers="[
+                { text: 'Power', value: 'power' },
+                { text: 'Cadence', value: 'cadence' },
+              ]"
             >
             </v-data-table>
+            <v-row v-if="DataItems.length >= 1 && file" class="mt-2">
+              <v-col cols="12" sm="6">
+                <v-card color="primary">
+                  <v-card-title class="white--text">Power</v-card-title>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" sm="6">
+                        <v-icon color="white" x-large>mdi-power-plug </v-icon>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <b
+                          class="text-h4 white--text"
+                          v-show="response && response.power"
+                          >{{
+                            response && response.power ? response.power : ""
+                          }}</b
+                        >
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-card color="primary">
+                  <v-card-title class="white--text">Cadence</v-card-title>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" sm="6">
+                        <v-icon color="white" x-large>mdi-bike-fast</v-icon>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <b class="text-h4 white--text">{{
+                          response && response.cadence ? response.cadence : ""
+                        }}</b>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+            <center v-if="DataItems.length >= 1 && file">
+              <v-btn
+                class="mt-2"
+                outlined
+                @click="
+                  stopFile();
+                  FileStop = true;
+                "
+                :color="FileStop ? 'red' : 'green'"
+              >
+                <v-icon v-if="FileStop">mdi-pause</v-icon>
+                {{ FileStop ? "STOP" : "STOPED" }}</v-btn
+              >
+            </center>
           </v-tab-item>
         </v-tabs-items>
       </v-card-text>
@@ -140,6 +239,14 @@ export default {
     // this.load()
   },
   methods: {
+    LoopFileData(data) {
+      for (var i of data) {
+        console.log(i);
+        this.PW_O = i[0];
+        this.COR_O = i[1];
+        this.send();
+      }
+    },
     callAPI() {
       var data = new FormData();
       data.append("file", this.file);
@@ -150,25 +257,37 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           console.log(data);
-          for(var i of data){
+          for (var i of data) {
             this.DataItems.push({
-              "power" : i[0], "cadence" : i[1]
-            })
-                console.log(i)
-                this.PW_O = i[0]
-                this.COR_O = i[1]
-                this.send()
-              }
-          
+              power: i[0],
+              cadence: i[1],
+            });
+          }
 
-          
+          this.loadFile(data);
         });
     },
+    // sleep(ms) {
+    //   return new Promise(resolve => setTimeout(resolve, ms));
+    // },
     load() {
+      this.overlay = false;
       var temp = this;
       this.timer = setInterval(function () {
         temp.send();
       }, 1000);
+    },
+    loadFile(data) {
+      var temp = this;
+      this.Filetimer = setInterval(function () {
+        temp.LoopFileData(data);
+      }, 1000);
+    },
+    stop() {
+      clearTimeout(this.timer);
+    },
+    stopFile() {
+      clearTimeout(this.Filetimer);
     },
     send() {
       this.loading = true;
@@ -187,7 +306,7 @@ export default {
           "&PRL=" +
           this.PRL +
           "&PW_O=" +
-          this.PW_O+
+          this.PW_O +
           "&COR_O=" +
           this.COR_O
       )
@@ -206,9 +325,13 @@ export default {
     },
   },
   data: () => ({
+    startOver: false,
+    FileStop: false,
+    overlay: true,
     DataItems: [],
     file: null,
     timer: null,
+    Filetimer: null,
     tab: null,
     loading: false,
     response: null,
@@ -230,9 +353,9 @@ export default {
     tab(value) {
       console.log(value);
       if (value == 1) {
-        clearTimeout(this.timer);
+        this.stop();
       }
-      if (value == 0) {
+      if (value == 0 && this.startOver) {
         console.log("Start Over");
         this.load();
         // var temp = this;
