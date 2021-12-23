@@ -1,34 +1,111 @@
 <template>
   <v-container>
+    <v-dialog
+      v-model="dialog"
+      width="500"
+    >
+      
+
+      <v-card>
+        <v-card-title class="text-h5 grey lighten-2">
+          .csv format
+        </v-card-title>
+
+        <v-card-text>
+          <v-data-table
+          :items="[
+          {'power': 250 , 'cadence': 85},
+          {'power': 251 , 'cadence': 85},
+          ]"
+          hide-default-footer
+          :headers="[{text: 'power' , value: 'power'}, {text: 'cadence' , value: 'cadence'}]"
+          ></v-data-table>
+        </v-card-text>
+
+        <v-divider></v-divider>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            text
+            @click="dialog = false"
+          >
+            Got It
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-card elevation="0">
       <v-overlay absolute :value="overlay">
         <v-btn
-          x-large
+          class="text-decoration-none"
+          large
           @click="
-            startOver = true;
-            load();
+            overlay = false;
+            tab = 0;
           "
           color="primary"
         >
-          <v-icon>mdi-play</v-icon> Start</v-btn
+          Basic</v-btn
+        >
+
+        <v-btn
+          class="ml-2"
+          large
+          @click="
+            overlay = false;
+            tab = 1;
+          "
+          color="primary"
+        >
+          <v-icon>mdi-file-upload-outline</v-icon> File Upload</v-btn
         >
       </v-overlay>
       <v-card-text>
         <v-tabs v-model="tab">
-          <v-tab>Default</v-tab>
-          <v-tab>File Load</v-tab>
+          <v-tab v-show="false">Default</v-tab>
+          <v-tab v-show="false">File Upload</v-tab>
         </v-tabs>
 
         <v-tabs-items v-model="tab">
           <v-tab-item>
-            <v-row
-              ><v-col class="d-flex justify-end">
-                <v-btn
+            <v-row>
+              <v-col cols="12" sm="6">
+                <v-icon
                   v-if="!overlay"
+                  @click="
+                    tab = 0;
+                    overlay = true;
+                  "
+                  title="Back"
+                  x-large
+                  color="primary"
+                  >mdi-keyboard-backspace</v-icon
+                >
+              </v-col>
+              <v-col cols="12" sm="6" class="d-flex justify-end">
+                <v-btn
+                  class="text-decoration-none"
+                  outlined
+                  v-if="!overlay && !basic_running"
+                  @click="
+                    startOver = true;
+                    basic_running = true;
+                    load();
+                  "
+                  color="green"
+                >
+                  <v-icon>mdi-play</v-icon> Start</v-btn
+                >
+                <v-btn
+                  class="ml-2"
+                  v-if="!overlay && basic_running"
                   outlined
                   @click="
+                    basic_running = false;
                     stop();
-                    overlay = true;
                   "
                   color="red"
                 >
@@ -127,9 +204,19 @@
             </v-row>
           </v-tab-item>
           <v-tab-item>
+            <v-icon
+              @click="
+                tab = 0;
+                overlay = true;
+              "
+              title="Back"
+              x-large
+              color="primary"
+              >mdi-keyboard-backspace</v-icon
+            >
             <v-alert class="mt-1" dense type="info">
-              RUN FILE will send power values every
-              <strong>1 second </strong> in loop-like
+              RUN FILE will loop of the rows in the csv. Sending metrics
+              <strong>1 second </strong> per row.
             </v-alert>
             <v-row>
               <v-col cols="12" sm="10">
@@ -141,6 +228,7 @@
                   chips
                   truncate-length="15"
                 ></v-file-input>
+                <a  @click="dialog=true">see exmaple</a>
               </v-col>
               <v-col cols="12" sm="2">
                 <v-btn
@@ -153,16 +241,19 @@
                 >
               </v-col>
             </v-row>
-            <v-data-table
+            
+
+            <!-- <v-data-table
               dense
-              v-if="DataItems.length >= 1 && file"
+              
               :items="DataItems"
               :headers="[
+                { text: 'Id', value: 'id' },
                 { text: 'Power', value: 'power' },
                 { text: 'Cadence', value: 'cadence' },
               ]"
             >
-            </v-data-table>
+            </v-data-table> -->
             <v-row v-if="DataItems.length >= 1 && file" class="mt-2">
               <v-col cols="12" sm="6">
                 <v-card color="primary">
@@ -205,18 +296,54 @@
             </v-row>
             <center v-if="DataItems.length >= 1 && file">
               <v-btn
+              v-if="FileStop"
+                class="mt-2"
+                outlined
+                @click="callAPI();FileStop=false"
+                color="green"
+              >
+                <v-icon > mdi-play </v-icon>
+                Start</v-btn>
+                <v-btn
+                v-if="!FileStop"
                 class="mt-2"
                 outlined
                 @click="
                   stopFile();
                   FileStop = true;
                 "
-                :color="FileStop ? 'red' : 'green'"
+                color="red"
               >
-                <v-icon v-if="FileStop">mdi-pause</v-icon>
-                {{ FileStop ? "STOP" : "STOPED" }}</v-btn
-              >
+                <v-icon > mdi-pause</v-icon>
+                Stop</v-btn>
             </center>
+            <v-simple-table v-if="DataItems.length >= 1 && file">
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th class="text-left">
+                      Id
+                    </th>
+                    <th class="text-left">
+                      Power
+                    </th>
+                    <th class="text-left">
+                      Cadence
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="item in DataItems"
+                    :key="item.id"
+                  >
+                    <td :bgcolor="item.id == currentIndex ? '#007bff': ''">  {{ item.id }} </td>
+                    <td :bgcolor="item.id == currentIndex ? '#007bff': ''">{{ item.power }}</td>
+                    <td :bgcolor="item.id == currentIndex ? '#007bff': ''">{{ item.cadence }}</td>
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
           </v-tab-item>
         </v-tabs-items>
       </v-card-text>
@@ -245,6 +372,7 @@ export default {
         this.PW_O = i[0];
         this.COR_O = i[1];
         this.send();
+        
       }
     },
     callAPI() {
@@ -257,12 +385,22 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           console.log(data);
-          for (var i of data) {
-            this.DataItems.push({
-              power: i[0],
-              cadence: i[1],
+          this.DataItems = []
+          var temp= this
+          data.forEach(function (value, i) {
+              temp.DataItems.push({
+              id: i,
+              power: value[0],
+              cadence: value[1],
             });
-          }
+          });
+          // for (var j,i of data) {
+          //   this.DataItems.push({
+          //     id: j,
+          //     power: i[0],
+          //     cadence: i[1],
+          //   });
+          // }
 
           this.loadFile(data);
         });
@@ -279,8 +417,22 @@ export default {
     },
     loadFile(data) {
       var temp = this;
+      var datalocal = data
+      var i =0
       this.Filetimer = setInterval(function () {
-        temp.LoopFileData(data);
+        console.log(i)
+        console.log(datalocal[i])
+        
+        temp.PW_O = datalocal[i][0];
+        temp.COR_O = datalocal[i][1];
+        temp.send();
+        temp.currentIndex = i
+        i++
+        if (i>=datalocal.length){
+          i = 0
+        }
+        
+        // temp.LoopFileData(data);
       }, 1000);
     },
     stop() {
@@ -325,6 +477,9 @@ export default {
     },
   },
   data: () => ({
+    currentIndex: null,
+     dialog: false,
+    basic_running: false,
     startOver: false,
     FileStop: false,
     overlay: true,
@@ -332,7 +487,7 @@ export default {
     file: null,
     timer: null,
     Filetimer: null,
-    tab: null,
+    tab: "2",
     loading: false,
     response: null,
     PW: 0,
