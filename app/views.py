@@ -124,6 +124,7 @@ class Request(APIView):
                 key = node.Network(NETKEY, 'N:ANT+')
                 antnode.setNetworkKey(0, key)
             except Exception as e:
+                print("Error: Exception in connecting device", str(e))
                 pass
             print("Starting power meter with ANT+ ID " + repr(POWER_SENSOR_ID))
             try:
@@ -183,8 +184,8 @@ class Request(APIView):
                 })
                 # master.update_idletasks()
                 # master.update()
-            except (KeyboardInterrupt, SystemExit):
-                pass
+            except (KeyboardInterrupt, SystemExit) as e:
+                print("Exception: ", str(r))
 
         except Exception as e:
             print("Exception: " + repr(e))
