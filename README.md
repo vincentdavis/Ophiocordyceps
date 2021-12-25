@@ -42,3 +42,7 @@ Mac
 
 * system log can be found in Vpower-debug.log file
 
+## Replace
+
+* bot.py replaced with app/Power.py 
+
