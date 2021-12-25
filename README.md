@@ -38,3 +38,7 @@ Mac
 
 * Open GUI app under  `/dist_electron/win-unpacked/vPower.exe` by double clicking
 
+## Log's
+
+* system log can be found in Vpower-debug.log file
+
