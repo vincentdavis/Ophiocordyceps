@@ -1,6 +1,6 @@
 ant @ git+https://github.com/mch/python-ant.git@87f395f57e1112ec1932eba8ddc5a0fd0b25f311
 asgiref==3.4.1
-certifi==2021.10.8
+certifi==2022.12.7
 Django==4.0
 django-cors-headers==3.10.1
 djangorestframework==3.13.1
